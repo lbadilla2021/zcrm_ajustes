@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_crm_recorridos_root"
+              name="Recorridos Comerciales"
+              parent="crm.crm_menu_root"
+              sequence="30"
+              groups="sales_team.group_sale_salesman"/>
+
+    <menuitem id="menu_crm_recorrido_mine"
+              name="Mis recorridos"
+              parent="menu_crm_recorridos_root"
+              action="action_crm_recorrido_mine"
+              sequence="10"/>
+
+    <menuitem id="menu_crm_recorrido_all"
+              name="Todos los recorridos"
+              parent="menu_crm_recorridos_root"
+              action="action_crm_recorrido_all"
+              sequence="20"
+              groups="sales_team.group_sale_manager"/>
+
+    <menuitem id="menu_crm_visita_mine"
+              name="Mis visitas"
+              parent="menu_crm_recorridos_root"
+              action="action_crm_visita_mine"
+              sequence="30"/>
+
+    <menuitem id="menu_crm_visita_all"
+              name="Todas las visitas"
+              parent="menu_crm_recorridos_root"
+              action="action_crm_visita_all"
+              sequence="40"
+              groups="sales_team.group_sale_manager"/>
+
+    <menuitem id="menu_crm_visita_analysis"
+              name="Análisis de visitas"
+              parent="menu_crm_recorridos_root"
+              action="action_crm_visita_analysis"
+              sequence="50"
+              groups="sales_team.group_sale_manager"/>
+</odoo>

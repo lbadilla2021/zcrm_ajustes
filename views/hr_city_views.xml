@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_city_list_location" model="ir.ui.view">
+        <field name="name">hr.city.list.location</field>
+        <field name="model">hr.city</field>
+        <field name="inherit_id" ref="zhr_ajustes.hr_city_list_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="country_id" optional="show"/>
+                <field name="state_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_hr_city_form_location" model="ir.ui.view">
+        <field name="name">hr.city.form.location</field>
+        <field name="model">hr.city</field>
+        <field name="inherit_id" ref="zhr_ajustes.hr_city_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="country_id"
+                       domain="[('code', '=', 'CL')]"
+                       options="{'no_create': True, 'no_open': True}"/>
+                <field name="state_id" options="{'no_create': True}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

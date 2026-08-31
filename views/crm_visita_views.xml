@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_crm_visita_list" model="ir.ui.view">
+        <field name="name">crm.visita.list</field>
+        <field name="model">crm.visita</field>
+        <field name="arch" type="xml">
+            <list string="Visitas comerciales"
+                  default_order="visit_datetime desc, id desc"
+                  decoration-success="state == 'converted'"
+                  decoration-danger="state == 'discarded'">
+                <field name="visit_datetime"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="visit_type"/>
+                <field name="is_client" optional="hide"/>
+                <field name="partner_id" optional="show"/>
+                <field name="project_name" optional="show"/>
+                <field name="construction_company_name" optional="show"/>
+                <field name="city_id" optional="show"/>
+                <field name="state_id" optional="show"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="project_amount" optional="show" sum="Total"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'converted'"
+                       decoration-danger="state == 'discarded'"
+                       decoration-warning="state == 'qualified'"/>
+                <field name="lead_id" optional="show"/>
+                <field name="recorrido_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_crm_visita_form" model="ir.ui.view">
+        <field name="name">crm.visita.form</field>
+        <field name="model">crm.visita</field>
+        <field name="arch" type="xml">
+            <form string="Visita comercial">
+                <header>
+                    <button name="action_create_lead" type="object"
+                            string="Crear Lead/Oportunidad" class="oe_highlight"
+                            invisible="lead_id or state == 'discarded'"/>
+                    <button name="action_open_lead" type="object"
+                            string="Abrir CRM" class="oe_highlight"
+                            invisible="not lead_id"/>
+                    <button name="action_create_contact" type="object"
+                            string="Crear contacto" invisible="partner_id"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="new,reviewed,qualified,converted,discarded"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Descartado" bg_color="text-bg-danger"
+                            invisible="state != 'discarded'"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Registro rápido">
+                            <field name="recorrido_id"/>
+                            <field name="visit_type"/>
+                            <field name="visit_datetime"/>
+                            <field name="project_name" placeholder="Ej.: Condominio Los Robles"/>
+                            <field name="construction_company_name" placeholder="Constructora identificada"/>
+                        </group>
+                        <group string="Responsable">
+                            <field name="user_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="is_client"/>
+                            <field name="partner_id"
+                                   domain="[('company_id', 'in', [False, company_id])]"
+                                   context="{'default_is_company': True, 'default_company_id': company_id}"/>
+                            <field name="lead_id" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Ubicación" name="location">
+                            <group>
+                                <field name="country_id"
+                                       domain="[('code', '=', 'CL')]"
+                                       options="{'no_create': True, 'no_open': True}"/>
+                                <field name="state_id" options="{'no_create': True}"/>
+                                <field name="city_id"
+                                       options="{'no_create': True, 'no_open': True}"/>
+                                <field name="street"/>
+                            </group>
+                        </page>
+                        <page string="Proyecto / Obra" name="project">
+                            <group>
+                                <group>
+                                    <field name="project_name"/>
+                                    <field name="construction_company_name"/>
+                                    <field name="construction_partner_id"
+                                           domain="[('company_id', 'in', [False, company_id])]"
+                                           context="{'default_is_company': True, 'default_company_id': company_id}"/>
+                                </group>
+                                <group>
+                                    <field name="currency_id" groups="base.group_multi_currency"/>
+                                    <field name="project_amount" widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                    <field name="information_source"/>
+                                    <field name="source_reference" placeholder="URL o descripción del origen"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Contacto" name="contact">
+                            <group>
+                                <group>
+                                    <field name="contact_name"/>
+                                    <field name="contact_position"/>
+                                    <field name="contact_email" widget="email"/>
+                                </group>
+                                <group>
+                                    <field name="contact_phone" widget="phone"/>
+                                    <field name="contact_mobile" widget="phone"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Comercial" name="commercial">
+                            <group>
+                                <field name="state"/>
+                                <field name="lead_id" options="{'no_create': True}"/>
+                                <field name="is_client"/>
+                                <field name="partner_id"
+                                       domain="[('company_id', 'in', [False, company_id])]"/>
+                            </group>
+                        </page>
+                        <page string="Observaciones" name="description">
+                            <field name="description"
+                                   placeholder="Avance, proveedores, materiales, verificaciones pendientes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_crm_visita_kanban" model="ir.ui.view">
+        <field name="name">crm.visita.kanban</field>
+        <field name="model">crm.visita</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" default_group_by="state">
+                <field name="currency_id"/>
+                <templates>
+                    <t t-name="card">
+                        <field name="project_name" class="fw-bold fs-5"/>
+                        <field name="name" class="text-muted"/>
+                        <div class="mt-1" t-if="record.partner_id.value">
+                            <i class="fa fa-building-o me-1" title="Cliente"/>
+                            <field name="partner_id"/>
+                        </div>
+                        <div t-if="record.construction_company_name.value">
+                            <i class="fa fa-wrench me-1" title="Constructora"/>
+                            <field name="construction_company_name"/>
+                        </div>
+                        <div t-if="record.city_id.value">
+                            <i class="fa fa-map-marker me-1" title="Ciudad"/>
+                            <field name="city_id"/>
+                        </div>
+                        <div class="mt-1">
+                            <field name="project_amount" widget="monetary"/>
+                        </div>
+                        <footer class="pt-2">
+                            <field name="state" widget="label_selection"
+                                   options="{'classes': {'new': 'default', 'reviewed': 'info', 'qualified': 'warning', 'discarded': 'danger', 'converted': 'success'}}"/>
+                            <field name="user_id" widget="many2one_avatar_user" class="ms-auto"/>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_crm_visita_calendar" model="ir.ui.view">
+        <field name="name">crm.visita.calendar</field>
+        <field name="model">crm.visita</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendario de visitas" date_start="visit_datetime"
+                      color="user_id" mode="month" event_limit="5">
+                <field name="project_name"/>
+                <field name="partner_id"/>
+                <field name="user_id" filters="1"/>
+                <field name="visit_type" filters="1"/>
+                <field name="state" filters="1"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_crm_visita_pivot" model="ir.ui.view">
+        <field name="name">crm.visita.pivot</field>
+        <field name="model">crm.visita</field>
+        <field name="arch" type="xml">
+            <pivot string="Análisis de visitas" sample="1">
+                <field name="user_id" type="row"/>
+                <field name="visit_type" type="row"/>
+                <field name="visit_datetime" type="col" interval="month"/>
+                <field name="visit_measure" type="measure"/>
+                <field name="project_amount" type="measure"/>
+                <field name="client_measure" type="measure"/>
+                <field name="lead_measure" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_crm_visita_graph" model="ir.ui.view">
+        <field name="name">crm.visita.graph</field>
+        <field name="model">crm.visita</field>
+        <field name="arch" type="xml">
+            <graph string="Análisis de visitas" type="bar" sample="1">
+                <field name="user_id"/>
+                <field name="visit_measure" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_crm_visita_search" model="ir.ui.view">
+        <field name="name">crm.visita.search</field>
+        <field name="model">crm.visita</field>
+        <field name="arch" type="xml">
+            <search string="Buscar visitas">
+                <field name="name"/>
+                <field name="project_name"/>
+                <field name="construction_company_name"/>
+                <field name="partner_id"/>
+                <field name="user_id"/>
+                <field name="recorrido_id"/>
+                <filter string="Mis visitas" name="my_visits" domain="[('user_id', '=', uid)]"/>
+                <separator/>
+                <filter string="Hoy" name="today"
+                        domain="[('visit_datetime', '&gt;=', context_today().strftime('%Y-%m-%d 00:00:00')), ('visit_datetime', '&lt;', (context_today() + relativedelta(days=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
+                <filter string="Esta semana" name="this_week"
+                        domain="[('visit_datetime', '&gt;=', (context_today() - relativedelta(days=context_today().weekday())).strftime('%Y-%m-%d 00:00:00')), ('visit_datetime', '&lt;', (context_today() + relativedelta(days=7-context_today().weekday())).strftime('%Y-%m-%d 00:00:00'))]"/>
+                <filter string="Este mes" name="this_month"
+                        domain="[('visit_datetime', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d 00:00:00')), ('visit_datetime', '&lt;', (context_today() + relativedelta(months=1, day=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
+                <filter string="Fecha de visita" name="visit_date" date="visit_datetime"/>
+                <separator/>
+                <filter string="Clientes" name="clients" domain="[('is_client', '=', True)]"/>
+                <filter string="No clientes" name="prospects" domain="[('is_client', '=', False)]"/>
+                <filter string="Obras" name="construction" domain="[('visit_type', '=', 'construction')]"/>
+                <filter string="Prospección" name="prospecting" domain="[('visit_type', '=', 'prospecting')]"/>
+                <separator/>
+                <filter string="Nuevos" name="new" domain="[('state', '=', 'new')]"/>
+                <filter string="Calificados" name="qualified" domain="[('state', '=', 'qualified')]"/>
+                <filter string="Convertidos" name="converted" domain="[('state', '=', 'converted')]"/>
+                <filter string="Sin oportunidad CRM" name="without_lead" domain="[('lead_id', '=', False)]"/>
+                <filter string="Con oportunidad CRM" name="with_lead" domain="[('lead_id', '!=', False)]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Vendedor" name="group_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Recorrido" name="group_route" context="{'group_by': 'recorrido_id'}"/>
+                    <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Tipo" name="group_type" context="{'group_by': 'visit_type'}"/>
+                    <filter string="Región" name="group_region" context="{'group_by': 'state_id'}"/>
+                    <filter string="Ciudad" name="group_city" context="{'group_by': 'city_id'}"/>
+                    <filter string="Cliente" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Cliente / No cliente" name="group_is_client" context="{'group_by': 'is_client'}"/>
+                    <filter string="Mes" name="group_month" context="{'group_by': 'visit_datetime:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_crm_visita_mine" model="ir.actions.act_window">
+        <field name="name">Mis visitas</field>
+        <field name="res_model">crm.visita</field>
+        <field name="view_mode">kanban,list,form,calendar,pivot,graph,activity</field>
+        <field name="domain">[('user_id', '=', uid)]</field>
+        <field name="context">{'default_user_id': uid, 'search_default_my_visits': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Registre su primera visita en terreno</p>
+            <p>Solo el recorrido, el tipo, el vendedor y la fecha/hora son obligatorios.</p>
+        </field>
+    </record>
+
+    <record id="action_crm_visita_all" model="ir.actions.act_window">
+        <field name="name">Todas las visitas</field>
+        <field name="res_model">crm.visita</field>
+        <field name="view_mode">kanban,list,form,calendar,pivot,graph,activity</field>
+        <field name="context">{}</field>
+    </record>
+
+    <record id="action_crm_visita_analysis" model="ir.actions.act_window">
+        <field name="name">Análisis de visitas</field>
+        <field name="res_model">crm.visita</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="context">{'search_default_group_month': 1}</field>
+    </record>
+</odoo>

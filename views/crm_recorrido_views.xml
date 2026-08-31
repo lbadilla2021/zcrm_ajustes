@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_crm_recorrido_list" model="ir.ui.view">
+        <field name="name">crm.recorrido.list</field>
+        <field name="model">crm.recorrido</field>
+        <field name="arch" type="xml">
+            <list string="Recorridos comerciales"
+                  default_order="start_datetime desc, id desc"
+                  decoration-info="state == 'in_progress'"
+                  decoration-success="state == 'done'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="start_datetime"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'in_progress'"
+                       decoration-success="state == 'done'"
+                       decoration-danger="state == 'cancelled'"/>
+                <field name="visit_count" sum="Total"/>
+                <field name="client_visit_count" sum="Total" optional="show"/>
+                <field name="prospect_visit_count" sum="Total" optional="show"/>
+                <field name="lead_count" sum="Total" optional="show"/>
+                <field name="end_datetime" optional="show"/>
+                <field name="duration" widget="float_time" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_crm_recorrido_form" model="ir.ui.view">
+        <field name="name">crm.recorrido.form</field>
+        <field name="model">crm.recorrido</field>
+        <field name="arch" type="xml">
+            <form string="Recorrido comercial">
+                <header>
+                    <button name="action_start" string="Iniciar recorrido" type="object"
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_done" string="Finalizar recorrido" type="object"
+                            class="oe_highlight" invisible="state != 'in_progress'"/>
+                    <button name="action_cancel" string="Cancelar" type="object"
+                            confirm="¿Confirma que desea cancelar este recorrido?"
+                            invisible="state not in ('draft', 'in_progress')"/>
+                    <button name="action_set_draft" string="Reabrir" type="object"
+                            groups="sales_team.group_sale_manager"
+                            invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,in_progress,done,cancelled"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_visits" type="object"
+                                class="oe_stat_button" icon="fa-map-marker">
+                            <field name="visit_count" widget="statinfo" string="Visitas"/>
+                        </button>
+                        <button name="action_view_leads" type="object"
+                                class="oe_stat_button" icon="fa-filter"
+                                invisible="lead_count == 0">
+                            <field name="lead_count" widget="statinfo" string="CRM"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Cancelado" bg_color="text-bg-danger"
+                            invisible="state != 'cancelled'"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Información general">
+                            <field name="user_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Tiempo">
+                            <field name="start_datetime" readonly="state != 'draft'"/>
+                            <field name="end_datetime" readonly="state not in ('draft', 'in_progress')"
+                                   placeholder="Obligatorio antes de finalizar"/>
+                            <field name="duration" widget="float_time"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Visitas" name="visits">
+                            <field name="visit_ids"
+                                   widget="save_parent_one2many"
+                                   context="{'default_recorrido_id': id, 'default_user_id': user_id, 'default_company_id': company_id, 'form_view_ref': 'zcrm_ajustes.view_crm_visita_form'}">
+                                <list default_order="visit_datetime desc, id desc">
+                                    <field name="visit_datetime"/>
+                                    <field name="visit_type"/>
+                                    <field name="is_client" optional="hide"/>
+                                    <field name="partner_id" optional="show"/>
+                                    <field name="project_name" optional="show"/>
+                                    <field name="construction_company_name" optional="show"/>
+                                    <field name="city_id" optional="show"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="project_amount" optional="show" sum="Total"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="lead_id" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Observaciones" name="notes">
+                            <field name="notes" placeholder="Observaciones generales del recorrido..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_crm_recorrido_search" model="ir.ui.view">
+        <field name="name">crm.recorrido.search</field>
+        <field name="model">crm.recorrido</field>
+        <field name="arch" type="xml">
+            <search string="Buscar recorridos">
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="start_datetime"/>
+                <filter string="Mis recorridos" name="my_routes"
+                        domain="[('user_id', '=', uid)]"/>
+                <separator/>
+                <filter string="Borradores" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="En recorrido" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Finalizados" name="done" domain="[('state', '=', 'done')]"/>
+                <filter string="Cancelados" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Inicio" name="route_start" date="start_datetime"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Vendedor" name="group_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Mes" name="group_month" context="{'group_by': 'start_datetime:month'}"/>
+                    <filter string="Compañía" name="group_company" context="{'group_by': 'company_id'}"
+                            groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_crm_recorrido_mine" model="ir.actions.act_window">
+        <field name="name">Mis recorridos</field>
+        <field name="res_model">crm.recorrido</field>
+        <field name="view_mode">list,form,activity</field>
+        <field name="domain">[('user_id', '=', uid)]</field>
+        <field name="context">{'default_user_id': uid, 'search_default_my_routes': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Inicie su primer recorrido comercial</p>
+            <p>Registre una jornada y agregue cada visita realizada en terreno.</p>
+        </field>
+    </record>
+
+    <record id="action_crm_recorrido_all" model="ir.actions.act_window">
+        <field name="name">Todos los recorridos</field>
+        <field name="res_model">crm.recorrido</field>
+        <field name="view_mode">list,form,activity</field>
+        <field name="context">{}</field>
+    </record>
+</odoo>

@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_crm_recorrido_user,crm.recorrido usuario,model_crm_recorrido,sales_team.group_sale_salesman,1,1,1,1
+access_crm_recorrido_manager,crm.recorrido jefe comercial,model_crm_recorrido,sales_team.group_sale_manager,1,1,1,1
+access_crm_visita_user,crm.visita usuario,model_crm_visita,sales_team.group_sale_salesman,1,1,1,1
+access_crm_visita_manager,crm.visita jefe comercial,model_crm_visita,sales_team.group_sale_manager,1,1,1,1
+access_hr_city_crm_user,hr.city lectura CRM,zhr_ajustes.model_hr_city,sales_team.group_sale_salesman,1,0,0,0
