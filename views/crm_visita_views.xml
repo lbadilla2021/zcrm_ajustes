@@ -59,17 +59,10 @@
                             <field name="recorrido_id"/>
                             <field name="visit_type"/>
                             <field name="visit_datetime"/>
-                            <field name="project_name" placeholder="Ej.: Condominio Los Robles"/>
-                            <field name="construction_company_name" placeholder="Constructora identificada"/>
                         </group>
                         <group string="Responsable">
                             <field name="user_id"/>
                             <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="is_client"/>
-                            <field name="partner_id"
-                                   domain="[('company_id', 'in', [False, company_id])]"
-                                   context="{'default_is_company': True, 'default_company_id': company_id}"/>
-                            <field name="lead_id" options="{'no_create': True}"/>
                         </group>
                     </group>
                     <notebook>
@@ -105,6 +98,9 @@
                         <page string="Contacto" name="contact">
                             <group>
                                 <group>
+                                    <field name="partner_id"
+                                           domain="[('company_id', 'in', [False, company_id])]"
+                                           context="{'default_is_company': True, 'default_company_id': company_id}"/>
                                     <field name="contact_name"/>
                                     <field name="contact_position"/>
                                     <field name="contact_email" widget="email"/>
@@ -120,8 +116,6 @@
                                 <field name="state"/>
                                 <field name="lead_id" options="{'no_create': True}"/>
                                 <field name="is_client"/>
-                                <field name="partner_id"
-                                       domain="[('company_id', 'in', [False, company_id])]"/>
                             </group>
                         </page>
                         <page string="Observaciones" name="description">
